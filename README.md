@@ -4,9 +4,29 @@ Residual Allocator is a lightweight post-refinement module for BS-RoFormer stem
 separation. It routes the residual between the input mix and base separator
 outputs back into the most plausible stems.
 
+Conventional stem separators can produce clean stems while still leaving a
+non-trivial gap between the input mix and the sum of separated stems. Residual
+Allocator treats that reconstruction residual as musically meaningful missing
+content, then routes it back into plausible stems while preserving mix closure.
+
 This repository contains the inference code, model definition, base BS-RoFormer
 architecture code needed for loading checkpoints, and a ConvResidualAllocator
 inference checkpoint.
+
+## What This Is
+
+Core:
+
+- Residual-aware post-refinement for compatible BS-RoFormer outputs.
+- Standalone inference for single files and folders.
+- A small allocator checkpoint distributed as `safetensors` plus sidecar YAML.
+
+Not core:
+
+- This is not a standalone separator. It runs after a compatible BS-RoFormer
+  base checkpoint.
+- The stem upmix script under `examples/` is an application example, not the
+  main allocator method.
 
 ## Checkpoints
 
@@ -69,7 +89,36 @@ Useful options:
 - `--allocator-config`: path to allocator sidecar YAML.
 - `--extract-instrumental`: also save `instrumental = mix - vocals`.
 
-## Example: Upmix Separated Stems
+## Compare Against Base
+
+Run the same track once with the base separator and once with Residual
+Allocator. The CLI prints mix closure metrics, including residual RMS and
+residual max amplitude, so the sum of stems can be compared against the input
+mix.
+
+```bash
+python infer.py \
+  --input /path/to/song.wav \
+  --output outputs/base/song \
+  --output-dir-is-stem-dir \
+  --base-only \
+  --base-checkpoint weights/BS-Rofo-SW-Fixed.ckpt
+
+python infer.py \
+  --input /path/to/song.wav \
+  --output outputs/allocator/song \
+  --output-dir-is-stem-dir \
+  --base-checkpoint weights/BS-Rofo-SW-Fixed.ckpt
+```
+
+Useful comparisons:
+
+- Base BS-RoFormer stems.
+- Base + Residual Allocator stems.
+- Sum of stems versus the original input mix.
+- Stem-level listening checks for residual material, artifacts, and leakage.
+
+## Application Example: Stem Upmix
 
 `examples/stem_upmix/upmix.py` is an optional example script that analyzes
 separated stems and renders a simple music-oriented upmix. It expects a stem
