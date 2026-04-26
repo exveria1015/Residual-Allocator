@@ -118,6 +118,14 @@ Useful comparisons:
 - Sum of stems versus the original input mix.
 - Stem-level listening checks for residual material, artifacts, and leakage.
 
+Example closure metrics on a private full-length stereo reference track
+(280.6 seconds, not redistributed):
+
+| mode | residual RMS (% of mix) | residual dB | sum-to-mix SDR | residual peak |
+| --- | ---: | ---: | ---: | ---: |
+| Base BS-RoFormer | 4.947953% | -26.11 dB | 26.11 dB | 0.24482233 |
+| Base + Residual Allocator | 0.000005% | -146.01 dB | 146.01 dB | 0.00000024 |
+
 ## Application Example: Stem Upmix
 
 `examples/stem_upmix/upmix.py` is an optional example script that analyzes
