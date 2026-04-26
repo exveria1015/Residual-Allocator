@@ -1,0 +1,14 @@
+torch>=2.0.1
+numpy
+soundfile
+librosa
+ml_collections
+omegaconf>=2.2
+PyYAML
+tqdm
+einops>=0.8.1
+beartype>=0.14.1
+rotary_embedding_torch>=0.3.5
+packaging
+safetensors
+scipy

@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+
+.venv/
+.env
+
+.DS_Store
+
+outputs/
+results/
+uploaded_files/
+
+*.ckpt
+*.pt
+*.pth
