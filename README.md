@@ -89,6 +89,21 @@ Useful options:
 - `--allocator-config`: path to allocator sidecar YAML.
 - `--extract-instrumental`: also save `instrumental = mix - vocals`.
 
+## Stem Layouts
+
+Residual Allocator follows the stem layout returned by the base BS-RoFormer
+checkpoint. There is no separate allocator mode switch for 4-stem versus
+6-stem inference.
+
+- With a 6-stem base model, residuals are routed across `bass`, `drums`,
+  `other`, `vocals`, `guitar`, and `piano`.
+- With a 4-stem base model, residuals are routed across `bass`, `drums`,
+  `other`, and `vocals`. Material that has no separate guitar or piano slot is
+  naturally handled through the base model's `other` stem.
+
+If you use a 6-stem base model but want 4-stem deliverables, use
+`--output-4stem-plus-instrumental`.
+
 ## Compare Against Base
 
 Run the same track once with the base separator and once with Residual

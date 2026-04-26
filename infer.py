@@ -525,6 +525,26 @@ def prefer_target_instrument(config: ConfigDict) -> list[str]:
     return list(config.training.instruments)
 
 
+def get_base_model_num_stems(config: ConfigDict, model: torch.nn.Module) -> int:
+    model_module = get_model_module(model)
+    num_stems = getattr(model_module, "num_stems", None)
+    if num_stems is not None:
+        return int(num_stems)
+    return len(prefer_target_instrument(config))
+
+
+def ordered_returned_stems(
+    config: ConfigDict,
+    waveforms: dict[str, np.ndarray],
+) -> list[str]:
+    preferred_order = list(prefer_target_instrument(config))
+    ordered = [stem for stem in preferred_order if stem in waveforms]
+    ordered.extend(stem for stem in waveforms.keys() if stem not in ordered)
+    if not ordered:
+        raise RuntimeError("Base demix did not produce any stems.")
+    return ordered
+
+
 def get_stem_chunk_size_overrides(config: ConfigDict) -> dict[str, int]:
     raw_overrides = get_inference_setting(config, "stem_chunk_sizes", None)
     if not raw_overrides:
@@ -1024,7 +1044,7 @@ def demix_with_chunk_size(
     ) and not bool(getattr(model_module, "use_owned_calibrator", False))
 
     mix_tensor = torch.as_tensor(mix, dtype=torch.float32)
-    num_instruments = len(prefer_target_instrument(config))
+    num_instruments = get_base_model_num_stems(config, model)
     num_overlap = int(get_inference_setting(config, "num_overlap", 2))
     fade_size = chunk_size // 10
     step = max(1, chunk_size // max(1, num_overlap))
@@ -1104,7 +1124,7 @@ def demix_with_chunk_size(
     if length_init > 2 * border and border > 0:
         estimated_sources = estimated_sources[..., border:-border]
 
-    instruments = prefer_target_instrument(config)
+    instruments = get_deterministic_simple_stem_names(config, estimated_sources.shape[0])
     return {
         instrument: estimated_sources[index]
         for index, instrument in enumerate(instruments)
@@ -1331,10 +1351,8 @@ def refine_with_allocator_chunked(
     dict[str, dict[str, np.ndarray] | np.ndarray] | None,
     list[str],
 ]:
-    ordered_instruments = list(prefer_target_instrument(base_config))
-    missing = [instr for instr in ordered_instruments if instr not in base_waveforms]
-    if missing:
-        raise RuntimeError(f"Base demix did not produce required stems: {missing}")
+    ordered_instruments = ordered_returned_stems(base_config, base_waveforms)
+    print(f"Allocator input stems: {ordered_instruments}")
 
     base_waveforms, pruned_base_silent_stems = maybe_prune_base_silent_stems_for_allocator(
         base_waveforms,
@@ -2700,7 +2718,10 @@ def load_inference_runtime(
             )
 
     print(f"Model load time: {time.time() - model_load_started:.2f} sec")
-    print(f"Instruments: {list(base_config.training.instruments)}")
+    base_model_num_stems = get_base_model_num_stems(base_config, base_model)
+    base_stem_layout = get_deterministic_simple_stem_names(base_config, base_model_num_stems)
+    print(f"Configured instruments: {list(base_config.training.instruments)}")
+    print(f"Base stem layout: {base_stem_layout}")
     if not args.base_only:
         allocator_chunk_size = int(
             get_inference_setting(
