@@ -174,7 +174,7 @@ inference:
   dim_t: 1101
   num_overlap: 2
   normalize: false
-  allocator_chunk_size: 882000
+  allocator_chunk_size: 33075
   stem_chunk_sizes:
     bass: 882000
     other: 882000
