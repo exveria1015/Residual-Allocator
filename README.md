@@ -89,6 +89,26 @@ Useful options:
 - `--allocator-config`: path to allocator sidecar YAML.
 - `--extract-instrumental`: also save `instrumental = mix - vocals`.
 
+### Allocator Chunk Size
+
+`inference.allocator_chunk_size` controls the chunk size used by the residual
+allocator stage. Smaller values reduce allocator-stage VRAM usage and can also
+improve local residual routing on some tracks, because the allocator makes
+short-window decisions about where reconstruction residual should be returned.
+
+The default config uses `33075`, which is 0.75 seconds at 44.1 kHz. In local
+6-stem validation it gave a better SDR/SI-SDR balance than the original larger
+allocator window while keeping allocator VRAM low.
+
+Experimental values:
+
+- `33075`: default short-window mode, about 0.75 seconds at 44.1 kHz.
+- `441000`: larger-window mode, safer for around 8 GB VRAM.
+- `588800`: larger-window mode, safer for around 12 GB VRAM.
+
+Very small chunks can be slower and should be checked for boundary artifacts on
+your own material.
+
 ## Stem Layouts
 
 Residual Allocator follows the stem layout returned by the base BS-RoFormer
